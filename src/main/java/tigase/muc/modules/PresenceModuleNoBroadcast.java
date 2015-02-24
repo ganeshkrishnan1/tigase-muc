@@ -61,7 +61,7 @@ public class PresenceModuleNoBroadcast extends PresenceModuleImpl {
 		presenceElement.setAttribute( "type", "unavailable" );
 
 		Collection<JID> occupantJIDs = new ArrayList<JID>( room.getOccupantsJidsByNickname( leavingNickname ) );
-		context.getGhostbuster().remove( senderJID, room );
+	//context.getGhostbuster().remove( senderJID, room );
 
 		room.updatePresenceByJid( senderJID, leavingNickname, null );
 
@@ -106,7 +106,7 @@ public class PresenceModuleNoBroadcast extends PresenceModuleImpl {
 	@Override
 	protected void processExit( Room room, Element presenceElement, JID senderJID )
 			throws MUCException, TigaseStringprepException {
-		super.processExit( room, presenceElement, senderJID );
+		//super.processExit( room, presenceElement, senderJID );
 
 	}
 

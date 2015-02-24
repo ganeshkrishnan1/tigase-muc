@@ -327,15 +327,15 @@ public class PresenceModuleImpl extends AbstractMucModule implements PresenceMod
 		final Role leavingRole = room.getRole(leavingNickname);
 		Element presenceElement = new Element("presence");
 
-		if (log.isLoggable(Level.FINER)) {
-			log.finer("Occupant " + senderJID + " known as " + leavingNickname + " is leaving room " + room.getRoomJID());
-		}
+		
+			log.warning("Occupant " + senderJID + " known as " + leavingNickname + " is leaving room " + room.getRoomJID());
+		
 
 		presenceElement.setAttribute("type", "unavailable");
 
 		Collection<JID> occupantJIDs = new ArrayList<JID>(room.getOccupantsJidsByNickname(leavingNickname));
 		boolean nicknameGone = room.removeOccupant(senderJID);
-		context.getGhostbuster().remove(senderJID, room);
+		//context.getGhostbuster().remove(senderJID, room);
 
 		room.updatePresenceByJid(senderJID, leavingNickname, null);
 
@@ -463,7 +463,7 @@ public class PresenceModuleImpl extends AbstractMucModule implements PresenceMod
 			Room room = context.getMucRepository().getRoom(roomJID);
 
 			if ((presenceType != null) && "unavailable".equals(presenceType)) {
-				processExit(room, element.getElement(), senderJID);
+				//processExit(room, element.getElement(), senderJID);
 
 				return;
 			}
@@ -643,7 +643,7 @@ public class PresenceModuleImpl extends AbstractMucModule implements PresenceMod
 		Element pe = clonePresence(element);
 		room.addOccupantByJid(senderJID, nickname, newRole, pe);
 
-		context.getGhostbuster().add(senderJID, room);
+		//context.getGhostbuster().add(senderJID, room);
 
 		// if (currentOccupantJid == null) {
 

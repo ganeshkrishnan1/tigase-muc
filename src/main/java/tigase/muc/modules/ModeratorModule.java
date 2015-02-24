@@ -437,7 +437,7 @@ public class ModeratorModule extends AbstractMucModule {
 					write(occupantKickPresence);
 				}
 				room.removeOccupant(occupantNick);
-				context.getGhostbuster().remove(occupantJids, room);
+				//context.getGhostbuster().remove(occupantJids, room);
 
 			}
 		}
@@ -476,7 +476,7 @@ public class ModeratorModule extends AbstractMucModule {
 				write(occupantKickPresence);
 			}
 			room.removeOccupant(occupantNick);
-			context.getGhostbuster().remove(occupantJids, room);
+			//context.getGhostbuster().remove(occupantJids, room);
 		} else {
 			room.setNewRole(occupantNick, newRole);
 		}

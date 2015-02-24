@@ -7,7 +7,7 @@
 	<groupId>tigase</groupId>
 	<artifactId>tigase-muc</artifactId>
 	<name>Tigase MUC</name>
-	<version>2.3.0-SNAPSHOT</version>
+	<version>2.4.0-SNAPSHOT</version>
 	<packaging>bundle</packaging>
 	<description>Multi User Chat component for Tigase</description>
 	<url>https://projects.tigase.org/projects/tigase-muc</url>
@@ -205,18 +205,8 @@
 			</snapshots>
 		</repository>
 	</repositories>
-	<distributionManagement>
-		<repository>
-			<id>tigase</id>
-			<name>Tigase repository</name>
-			<url>scp://maven.tigase.org:/home/webapp/maven-repository</url>
-		</repository>
-		<snapshotRepository>
-			<id>tigase-snapshot</id>
-			<name>Tigase snapshot repository</name>
-			<url>scp://build.xmpp-test.net:/home/maven/repository</url>
-		</snapshotRepository>
-	</distributionManagement>
+
+	
 	<reporting>
 		<plugins>
 		</plugins>

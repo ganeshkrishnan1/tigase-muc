@@ -76,10 +76,10 @@ public class MUCComponent extends AbstractComponent<MucContext> {
 			return MUCComponent.this.chatLoggingDirectory;
 		}
 
-		@Override
-		public Ghostbuster2 getGhostbuster() {
-			return MUCComponent.this.ghostbuster;
-		}
+//		@Override
+//		public Ghostbuster2 getGhostbuster() {
+//			return MUCComponent.this.ghostbuster;
+//		}
 
 		@Override
 		public HistoryProvider getHistoryProvider() {
@@ -215,35 +215,9 @@ public class MUCComponent extends AbstractComponent<MucContext> {
 		return new InMemoryMucRepository(componentConfig, dao);
 	}
 
-	@Override
-	public synchronized void everyHour() {
-		super.everyHour();
-		if (!searchGhostsEveryMinute)
-			executePingInThread();
-	}
+	
 
-	@Override
-	public synchronized void everyMinute() {
-		super.everyMinute();
-		if (searchGhostsEveryMinute)
-			executePingInThread();
-	}
 
-	private void executePingInThread() {
-		if (ghostbuster != null) {
-			(new Thread() {
-				@Override
-				public void run() {
-					try {
-						ghostbuster.ping();
-					} catch (Exception e) {
-						log.log(Level.SEVERE, "Can't ping known JIDs", e);
-					}
-
-				}
-			}).start();
-		}
-	}
 
 	@Override
 	public String getComponentVersion() {
@@ -285,7 +259,7 @@ public class MUCComponent extends AbstractComponent<MucContext> {
 		props.put(MESSAGE_FILTER_ENABLED_KEY, Boolean.TRUE);
 		props.put(PRESENCE_FILTER_ENABLED_KEY, Boolean.FALSE);
 		props.put(SEARCH_GHOSTS_EVERY_MINUTE_KEY, Boolean.FALSE);
-		props.put(GHOSTBUSTER_ENABLED_KEY, Boolean.TRUE);
+		props.put(GHOSTBUSTER_ENABLED_KEY, Boolean.FALSE);
 
 		props.put(MUC_ALLOW_CHAT_STATES_KEY, Boolean.FALSE);
 		props.put(MUC_LOCK_NEW_ROOM_KEY, Boolean.TRUE);
@@ -367,13 +341,8 @@ public class MUCComponent extends AbstractComponent<MucContext> {
 	 */
 	@Override
 	public void processPacket(Packet packet) {
-		if (ghostbuster != null) {
-			try {
-				ghostbuster.update(packet);
-			} catch (Exception e) {
-				log.log(Level.WARNING, "There is no Dana, there is only Zuul", e);
-			}
-		}
+		log.log(Level.WARNING, "MUCProcessing packet for MUC: " + packet);
+		
 		super.processPacket(packet);
 	}
 
@@ -508,10 +477,7 @@ public class MUCComponent extends AbstractComponent<MucContext> {
 
 		super.setProperties(props);
 
-		if (ghostbuster != null && modulesManager.isRegistered(PresenceModule.ID)) {
-			PresenceModule module = modulesManager.getModule(PresenceModule.ID);
-			ghostbuster.setPresenceModule(module);
-		}
+
 
 	}
 

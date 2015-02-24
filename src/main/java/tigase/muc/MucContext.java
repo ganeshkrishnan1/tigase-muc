@@ -38,7 +38,7 @@ public interface MucContext extends Context {
 	 */
 	String getChatLoggingDirectory();
 
-	Ghostbuster2 getGhostbuster();
+	//Ghostbuster2 getGhostbuster();
 
 	HistoryProvider getHistoryProvider();
 

@@ -183,6 +183,7 @@ public class GroupchatMessageModule extends AbstractMucModule {
 	@Override
 	public void process(Packet packet) throws MUCException {
 		try {
+			log.log(Level.WARNING, "xgroupchat module packet for MUC: " + packet);
 			final JID senderJID = JID.jidInstance(packet.getAttributeStaticStr(Packet.FROM_ATT));
 			final BareJID roomJID = BareJID.bareJIDInstance(packet.getAttributeStaticStr(Packet.TO_ATT));
 
@@ -199,11 +200,6 @@ public class GroupchatMessageModule extends AbstractMucModule {
 			final String nickName = room.getOccupantsNickname(senderJID);
 			final Role role = room.getRole(nickName);
 			final Affiliation affiliation = room.getAffiliation(senderJID.getBareJID());
-
-			if (log.isLoggable(Level.FINEST)) {
-				log.finest("Processing groupchat message. room=" + roomJID + "; senderJID=" + senderJID + "; senderNickname="
-						+ nickName + "; role=" + role + "; affiliation=" + affiliation + ";");
-			}
 
 			if (!role.isSendMessagesToAll() || (room.getConfig().isRoomModerated() && (role == Role.visitor))) {
 				if (log.isLoggable(Level.FINE))
@@ -321,16 +317,16 @@ public class GroupchatMessageModule extends AbstractMucModule {
 
 	public void sendMessagesToAllOccupantsJids(final Room room, final JID fromJID, String messageId, final Element... content)
 			throws TigaseStringprepException {
-
+		log.log(Level.WARNING, "xgroupchat sending messages to all occupants: " + room + " nick name " +  room.getOccupantsNicknames());
 		for (String nickname : room.getOccupantsNicknames()) {
 			final Role role = room.getRole(nickname);
-
+		
 			if (!role.isReceiveMessages()) {
 				continue;
 			}
 
 			final Collection<JID> occupantJids = room.getOccupantsJidsByNickname(nickname);
-
+			log.log(Level.WARNING, "xgroupchat TOTAL occupants: " + occupantJids);
 			for (JID jid : occupantJids) {
 				Element e = new Element("message", new String[] { "type", "from", "to" }, new String[] { "groupchat",
 						fromJID.toString(), jid.toString() });
@@ -338,7 +334,7 @@ public class GroupchatMessageModule extends AbstractMucModule {
 					e.setAttribute("id", messageId);
 				Packet message = Packet.packetInstance(e);
 				message.setXMLNS(Packet.CLIENT_XMLNS);
-
+			
 				// Packet message = Message.getMessage(fromJID, jid,
 				// StanzaType.groupchat, null, null, null, null);
 
@@ -349,7 +345,7 @@ public class GroupchatMessageModule extends AbstractMucModule {
 						}
 					}
 				}
-
+// we sent this to message amp or some other plugin to make sure it's deliverred?
 				write(message);
 			}
 		}
