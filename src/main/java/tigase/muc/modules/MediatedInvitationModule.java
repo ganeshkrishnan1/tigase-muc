@@ -22,6 +22,7 @@
 package tigase.muc.modules;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 import tigase.component.exceptions.RepositoryException;
 import tigase.criteria.Criteria;
@@ -30,6 +31,7 @@ import tigase.criteria.Or;
 import tigase.muc.Affiliation;
 import tigase.muc.Role;
 import tigase.muc.Room;
+import tigase.muc.RoomConfig;
 import tigase.muc.exceptions.MUCException;
 import tigase.server.Packet;
 import tigase.util.TigaseStringprepException;
@@ -50,6 +52,7 @@ public class MediatedInvitationModule extends AbstractMucModule {
 					new Or(ElementCriteria.name("invite"), ElementCriteria.name("decline"))));
 
 	public static final String ID = "invitations";
+	protected static final Logger log = Logger.getLogger(MediatedInvitationModule.class.getName());
 
 	/**
 	 * @param senderJID
@@ -61,14 +64,15 @@ public class MediatedInvitationModule extends AbstractMucModule {
 		final Element reason = decline.getChild("reason");
 		final JID recipient = JID.jidInstance(decline.getAttributeStaticStr(Packet.TO_ATT));
 
-		Packet resultMessage = Packet.packetInstance(new Element("message", new String[] { Packet.FROM_ATT, Packet.TO_ATT },
-				new String[] { roomJID.toString(), recipient.toString() }));
+		Packet resultMessage = Packet.packetInstance(new Element("message", new String[] { Packet.FROM_ATT,
+				Packet.TO_ATT }, new String[] { roomJID.toString(), recipient.toString() }));
 		resultMessage.setXMLNS(Packet.CLIENT_XMLNS);
 
 		final Element resultX = new Element("x", new String[] { Packet.XMLNS_ATT },
 				new String[] { "http://jabber.org/protocol/muc#user" });
 		resultMessage.getElement().addChild(resultX);
-		final Element resultDecline = new Element("decline", new String[] { "from" }, new String[] { senderJID.toString() });
+		final Element resultDecline = new Element("decline", new String[] { "from" },
+				new String[] { senderJID.toString() });
 		resultX.addChild(resultDecline);
 		if (reason != null) {
 			resultDecline.addChild(reason.clone());
@@ -104,9 +108,19 @@ public class MediatedInvitationModule extends AbstractMucModule {
 		final Element reason = invite.getChild("reason");
 		final Element cont = invite.getChild("continue");
 		final JID recipient = JID.jidInstance(invite.getAttributeStaticStr(Packet.TO_ATT));
+		final Affiliation affiliation = Affiliation.member;
+		final Role newRole = getDefaultRole(room.getConfig(), affiliation);
 
-		Packet resultMessage = Packet.packetInstance(new Element("message", new String[] { Packet.FROM_ATT, Packet.TO_ATT },
-				new String[] { roomJID.toString(), recipient.toString() }));
+		try {
+			Element pe = new Element("presence");
+			room.addOccupantByJid(senderJID, recipient.toString(), newRole, pe);
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			log.warning(" error adding coccupants");
+		}
+
+		Packet resultMessage = Packet.packetInstance(new Element("message", new String[] { Packet.FROM_ATT,
+				Packet.TO_ATT }, new String[] { roomJID.toString(), recipient.toString() }));
 		resultMessage.setXMLNS(Packet.CLIENT_XMLNS);
 
 		final Element resultX = new Element("x", new String[] { Packet.XMLNS_ATT },
@@ -117,7 +131,8 @@ public class MediatedInvitationModule extends AbstractMucModule {
 			room.addAffiliationByJid(recipient.getBareJID(), Affiliation.member);
 		}
 
-		final Element resultInvite = new Element("invite", new String[] { "from" }, new String[] { senderJID.toString() });
+		final Element resultInvite = new Element("invite", new String[] { "from" },
+				new String[] { senderJID.toString() });
 
 		resultX.addChild(resultInvite);
 		if (room.getConfig().isPasswordProtectedRoom()) {
@@ -134,8 +149,50 @@ public class MediatedInvitationModule extends AbstractMucModule {
 		if (bdy != null) {
 			resultMessage.getElement().addChild(bdy.clone());
 		}
-
+		log.info("inviting child " + resultMessage);
 		write(resultMessage);
+	}
+
+	private static Role getDefaultRole(final RoomConfig config, final Affiliation affiliation) {
+		Role newRole;
+
+		if (config.isRoomModerated() && (affiliation == Affiliation.none)) {
+			newRole = Role.visitor;
+		} else {
+			switch (affiliation) {
+			case admin:
+				newRole = Role.moderator;
+
+				break;
+
+			case member:
+				newRole = Role.participant;
+
+				break;
+
+			case none:
+				newRole = Role.participant;
+
+				break;
+
+			case outcast:
+				newRole = Role.none;
+
+				break;
+
+			case owner:
+				newRole = Role.moderator;
+
+				break;
+
+			default:
+				newRole = Role.none;
+
+				break;
+			}
+		}
+
+		return newRole;
 	}
 
 	/**
@@ -185,7 +242,8 @@ public class MediatedInvitationModule extends AbstractMucModule {
 			final Affiliation senderAffiliation = room.getAffiliation(senderJID.getBareJID());
 
 			final Element x = element.getElement().getChild("x", "http://jabber.org/protocol/muc#user");
-
+			log.info(" Processing invitation listener message for nickname: " + nickName + " room: " + room
+					+ " senderjjid " + senderJID);
 			List<Element> ch = x.getChildren();
 			for (Element child : ch) {
 				if (element.getType() == StanzaType.error && "invite".equals(child.getName())) {
@@ -209,14 +267,15 @@ public class MediatedInvitationModule extends AbstractMucModule {
 			throws TigaseStringprepException {
 		final JID recipient = JID.jidInstance(invite.getAttributeStaticStr(Packet.FROM_ATT));
 
-		Packet resultMessage = Packet.packetInstance(new Element("message", new String[] { Packet.FROM_ATT, Packet.TO_ATT },
-				new String[] { roomJID.toString(), recipient.toString() }));
+		Packet resultMessage = Packet.packetInstance(new Element("message", new String[] { Packet.FROM_ATT,
+				Packet.TO_ATT }, new String[] { roomJID.toString(), recipient.toString() }));
 		resultMessage.setXMLNS(Packet.CLIENT_XMLNS);
 
 		final Element resultX = new Element("x", new String[] { Packet.XMLNS_ATT },
 				new String[] { "http://jabber.org/protocol/muc#user" });
 		resultMessage.getElement().addChild(resultX);
-		final Element resultDecline = new Element("decline", new String[] { "from" }, new String[] { senderJID.toString() });
+		final Element resultDecline = new Element("decline", new String[] { "from" },
+				new String[] { senderJID.toString() });
 		resultX.addChild(resultDecline);
 
 		Element reason = new Element("reason", "Your invitation is returned with error"

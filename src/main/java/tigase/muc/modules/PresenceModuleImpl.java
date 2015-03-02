@@ -150,7 +150,7 @@ public class PresenceModuleImpl extends AbstractMucModule implements PresenceMod
 		}
 	}
 
-	private static final Criteria CRIT = ElementCriteria.name( "presence" );
+	private static final Criteria CRIT = ElementCriteria.name("presence");
 
 	/** Field description */
 	protected static final Logger log = Logger.getLogger(PresenceModule.class.getName());
@@ -327,15 +327,13 @@ public class PresenceModuleImpl extends AbstractMucModule implements PresenceMod
 		final Role leavingRole = room.getRole(leavingNickname);
 		Element presenceElement = new Element("presence");
 
-		
-			log.warning("Occupant " + senderJID + " known as " + leavingNickname + " is leaving room " + room.getRoomJID());
-		
+		log.warning("Occupant " + senderJID + " known as " + leavingNickname + " is leaving room " + room.getRoomJID());
 
 		presenceElement.setAttribute("type", "unavailable");
 
 		Collection<JID> occupantJIDs = new ArrayList<JID>(room.getOccupantsJidsByNickname(leavingNickname));
 		boolean nicknameGone = room.removeOccupant(senderJID);
-		//context.getGhostbuster().remove(senderJID, room);
+		// context.getGhostbuster().remove(senderJID, room);
 
 		room.updatePresenceByJid(senderJID, leavingNickname, null);
 
@@ -447,7 +445,7 @@ public class PresenceModuleImpl extends AbstractMucModule implements PresenceMod
 		final BareJID roomJID = BareJID.bareJIDInstance(element.getAttributeStaticStr(Packet.TO_ATT));
 		final String nickName = getNicknameFromJid(JID.jidInstance(element.getAttributeStaticStr(Packet.TO_ATT)));
 		final String presenceType = element.getAttributeStaticStr(Packet.TYPE_ATT);
-
+		log.info("Processing presences " + element);
 		// final String id = element.getAttribute("id");
 		if ((presenceType != null) && "error".equals(presenceType)) {
 			if (log.isLoggable(Level.FINER)) {
@@ -463,7 +461,6 @@ public class PresenceModuleImpl extends AbstractMucModule implements PresenceMod
 			Room room = context.getMucRepository().getRoom(roomJID);
 
 			if ((presenceType != null) && "unavailable".equals(presenceType)) {
-				//processExit(room, element.getElement(), senderJID);
 
 				return;
 			}
@@ -473,7 +470,8 @@ public class PresenceModuleImpl extends AbstractMucModule implements PresenceMod
 
 			if (room == null) {
 				if (log.isLoggable(Level.INFO)) {
-					log.info("Creating new room '" + roomJID + "' by user " + nickName + "' <" + senderJID.toString() + ">");
+					log.info("Creating new room '" + roomJID + "' by user " + nickName + "' <" + senderJID.toString()
+							+ ">");
 				}
 				room = context.getMucRepository().createNewRoom(roomJID, senderJID);
 				room.addAffiliationByJid(senderJID.getBareJID(), Affiliation.owner);
@@ -486,6 +484,7 @@ public class PresenceModuleImpl extends AbstractMucModule implements PresenceMod
 				knownNickname = room.getOccupantsNickname(senderJID);
 			}
 
+			log.info("Processing presences: known nickname " + knownNickname + " nickname:: " + nickName);
 			final boolean probablyReEnter = element.getElement().getChild("x", "http://jabber.org/protocol/muc") != null;
 
 			if ((knownNickname != null) && !knownNickname.equals(nickName)) {
@@ -521,12 +520,13 @@ public class PresenceModuleImpl extends AbstractMucModule implements PresenceMod
 			log.finest("Processing stanza " + presenceElement.toString());
 		}
 
-		// we only update presence if the room is not filtered or user is on the list of desired affiliations
-		if ( !room.getConfig().isPresenceFilterEnabled()
-				 || ( room.getConfig().isPresenceFilterEnabled()
-							&& !room.getConfig().getPresenceFilteredAffiliations().isEmpty()
-							&& room.getConfig().getPresenceFilteredAffiliations().contains( room.getAffiliation( senderJID.getBareJID() ) ) ) ){
-			room.updatePresenceByJid( null, nickname, clonePresence( presenceElement ) );
+		// we only update presence if the room is not filtered or user is on the
+		// list of desired affiliations
+		if (!room.getConfig().isPresenceFilterEnabled()
+				|| (room.getConfig().isPresenceFilterEnabled()
+						&& !room.getConfig().getPresenceFilteredAffiliations().isEmpty() && room.getConfig()
+						.getPresenceFilteredAffiliations().contains(room.getAffiliation(senderJID.getBareJID())))) {
+			room.updatePresenceByJid(null, nickname, clonePresence(presenceElement));
 		}
 
 		Element pe = room.getLastPresenceCopyByJid(senderJID.getBareJID());
@@ -572,10 +572,11 @@ public class PresenceModuleImpl extends AbstractMucModule implements PresenceMod
 	 * @throws MUCException
 	 * @throws TigaseStringprepException
 	 */
-	protected void processEntering(final Room room, final boolean roomCreated, final Element element, final JID senderJID,
-			final String nickname) throws MUCException, TigaseStringprepException {
+	protected void processEntering(final Room room, final boolean roomCreated, final Element element,
+			final JID senderJID, final String nickname) throws MUCException, TigaseStringprepException {
 		if (log.isLoggable(Level.FINEST)) {
-			log.finest("Processing stanza " + element.toString());
+			log.finest("Processing Entering stanza " + element.toString() + " room created? " + roomCreated
+					+ " from senderjid " + senderJID);
 		}
 
 		final Affiliation affiliation = room.getAffiliation(senderJID.getBareJID());
@@ -597,7 +598,7 @@ public class PresenceModuleImpl extends AbstractMucModule implements PresenceMod
 			}
 		}
 		if (room.isRoomLocked() && (affiliation != Affiliation.owner)) {
-
+			log.warning(" Room is locked " + room);
 			// Service Denies Access Because Room Does Not (Yet) Exist
 			throw new MUCException(Authorization.ITEM_NOT_FOUND, null, "Room exists but is locked");
 		}
@@ -623,7 +624,8 @@ public class PresenceModuleImpl extends AbstractMucModule implements PresenceMod
 
 		final BareJID currentOccupantJid = room.getOccupantsJidByNickname(nickname);
 
-		if ((currentOccupantJid != null) && (!context.isMultiItemMode() || !currentOccupantJid.equals(senderJID.getBareJID()))) {
+		if ((currentOccupantJid != null)
+				&& (!context.isMultiItemMode() || !currentOccupantJid.equals(senderJID.getBareJID()))) {
 
 			// Service Denies Access Because of Nick Conflict
 			throw new MUCException(Authorization.CONFLICT);
@@ -635,15 +637,14 @@ public class PresenceModuleImpl extends AbstractMucModule implements PresenceMod
 
 		final Role newRole = getDefaultRole(room.getConfig(), affiliation);
 
-		if (log.isLoggable(Level.FINEST)) {
-			log.finest("Occupant '" + nickname + "' <" + senderJID.toString() + "> is entering room " + room.getRoomJID()
-					+ " as role=" + newRole.name() + ", affiliation=" + affiliation.name());
-		}
+		log.info("ProcEnter: Occupant '" + nickname + "' <" + senderJID.toString() + "> is entering room "
+				+ room.getRoomJID() + " as role=" + newRole.name() + ", affiliation=" + affiliation.name());
 
 		Element pe = clonePresence(element);
+		log.info("Adding occupants PE:" + pe + " niclname:"+ nickname +" senderjid:" + senderJID );
 		room.addOccupantByJid(senderJID, nickname, newRole, pe);
 
-		//context.getGhostbuster().add(senderJID, room);
+		// context.getGhostbuster().add(senderJID, room);
 
 		// if (currentOccupantJid == null) {
 
@@ -665,14 +666,20 @@ public class PresenceModuleImpl extends AbstractMucModule implements PresenceMod
 			since = DateUtil.parse(hist.getAttributeStaticStr("since"));
 		}
 		sendHistoryToUser(room, senderJID, maxchars, maxstanzas, seconds, since);
-		if ((room.getSubject() != null) && (room.getSubjectChangerNick() != null) && (room.getSubjectChangeDate() != null)) {
-			Element message = new Element(Message.ELEM_NAME, new String[] { Packet.TYPE_ATT, Packet.FROM_ATT, Packet.TO_ATT },
-					new String[] { "groupchat", room.getRoomJID() + "/" + room.getSubjectChangerNick(), senderJID.toString() });
+		log.info("rool subect: " + room.getSubject() + " nick:" + room.getSubjectChangerNick() + " datet:"
+				+ room.getSubjectChangeDate());
+		if ((room.getSubject() != null) && (room.getSubjectChangerNick() != null)
+				&& (room.getSubjectChangeDate() != null)) {
+
+			Element message = new Element(Message.ELEM_NAME, new String[] { Packet.TYPE_ATT, Packet.FROM_ATT,
+					Packet.TO_ATT }, new String[] { "groupchat",
+					room.getRoomJID() + "/" + room.getSubjectChangerNick(), senderJID.toString() });
 
 			message.addChild(new Element("subject", room.getSubject()));
 
 			String stamp = DateUtil.formatDatetime(room.getSubjectChangeDate());
-			Element delay = new Element("delay", new String[] { "xmlns", "stamp" }, new String[] { "urn:xmpp:delay", stamp });
+			Element delay = new Element("delay", new String[] { "xmlns", "stamp" }, new String[] { "urn:xmpp:delay",
+					stamp });
 
 			delay.setAttribute("jid", room.getRoomJID() + "/" + room.getSubjectChangerNick());
 
@@ -684,9 +691,11 @@ public class PresenceModuleImpl extends AbstractMucModule implements PresenceMod
 
 			Packet p = Packet.packetInstance(message);
 			p.setXMLNS(Packet.CLIENT_XMLNS);
-
+			log.info(" gropp proc create:" + p);
 			write(p);
 		}
+		log.info(" room is lock?" + room.isRoomLocked() + " room created??"+ roomCreated);
+	
 		if (room.isRoomLocked()) {
 			sendMucMessage(room, room.getOccupantsNickname(senderJID), "Room is locked. Please configure.");
 		}
@@ -699,6 +708,7 @@ public class PresenceModuleImpl extends AbstractMucModule implements PresenceMod
 			} else if (context.isNewRoomLocked()) {
 				sb.append(" Room is unlocked and ready for occupants!");
 			}
+			
 			sendMucMessage(room, room.getOccupantsNickname(senderJID), sb.toString());
 		}
 		if (room.getConfig().isLoggingEnabled()) {
@@ -722,11 +732,11 @@ public class PresenceModuleImpl extends AbstractMucModule implements PresenceMod
 	 * @throws MUCException
 	 * @throws TigaseStringprepException
 	 */
-	protected void processExit(final Room room, final Element presenceElement, final JID senderJID) throws MUCException,
-			TigaseStringprepException {
-		if (log.isLoggable(Level.FINEST)) {
-			log.finest("Processing stanza " + presenceElement.toString());
-		}
+	protected void processExit(final Room room, final Element presenceElement, final JID senderJID)
+			throws MUCException, TigaseStringprepException {
+
+		log.warning("GROUPChat: Processing stanza " + presenceElement.toString());
+
 		if (room == null) {
 			throw new MUCException(Authorization.ITEM_NOT_FOUND, "Unkown room");
 		}
@@ -750,117 +760,121 @@ public class PresenceModuleImpl extends AbstractMucModule implements PresenceMod
 	 * @param seconds
 	 * @param since
 	 */
-	private void sendHistoryToUser(final Room room, final JID senderJID, final Integer maxchars, final Integer maxstanzas,
-			final Integer seconds, final Date since) {
+	private void sendHistoryToUser(final Room room, final JID senderJID, final Integer maxchars,
+			final Integer maxstanzas, final Integer seconds, final Date since) {
 		HistoryProvider historyProvider = context.getHistoryProvider();
 		if (log.isLoggable(Level.FINEST)) {
 			log.finest("Sending history to user using: " + historyProvider + " history provider");
 		}
 
 		if (historyProvider != null) {
-			historyProvider.getHistoryMessages(room, senderJID, maxchars, maxstanzas, seconds, since, context.getWriter());
+			historyProvider.getHistoryMessages(room, senderJID, maxchars, maxstanzas, seconds, since,
+					context.getWriter());
 		}
 	}
 
 	@Override
 	public void sendPresencesToNewOccupant(Room room, JID senderJID) throws TigaseStringprepException {
 		BareJID currentOccupantJid = senderJID.getBareJID();
-		Affiliation senderAffiliation = room.getAffiliation( currentOccupantJid );
+		Affiliation senderAffiliation = room.getAffiliation(currentOccupantJid);
 
-		// in filtered room we skip sending occupants list to new occupants witout propper affiliation
-		if ( room.getConfig().isPresenceFilterEnabled()
-				 && !room.getConfig().getPresenceFilteredAffiliations().contains( senderAffiliation ) ){
-			if ( log.isLoggable( Level.FINEST ) ){
-				log.log( Level.FINEST, "Filtering enabled: " + room.getConfig().isPresenceFilterEnabled()
-															 + "; new occupant doesn't have propper affiliation -  skip sending occupants list" );
+		// in filtered room we skip sending occupants list to new occupants
+		// witout propper affiliation
+		if (room.getConfig().isPresenceFilterEnabled()
+				&& !room.getConfig().getPresenceFilteredAffiliations().contains(senderAffiliation)) {
+			if (log.isLoggable(Level.FINEST)) {
+				log.log(Level.FINEST, "Filtering enabled: " + room.getConfig().isPresenceFilterEnabled()
+						+ "; new occupant doesn't have propper affiliation -  skip sending occupants list");
 			}
 			return;
 		}
 
-		for ( String occupantNickname : room.getOccupantsNicknames() ) {
-			final BareJID occupantJid = room.getOccupantsJidByNickname( occupantNickname );
+		for (String occupantNickname : room.getOccupantsNicknames()) {
+			final BareJID occupantJid = room.getOccupantsJidByNickname(occupantNickname);
 			// we don't include current user in occupants presence broadcast
-			if ( currentOccupantJid != null && currentOccupantJid.equals( occupantJid ) ){
+			if (currentOccupantJid != null && currentOccupantJid.equals(occupantJid)) {
 				continue;
 			}
 
-			Affiliation affiliation = room.getAffiliation( occupantJid );
-			if ( room.getConfig().isPresenceFilterEnabled()
-					 && !room.getConfig().getPresenceFilteredAffiliations().contains( affiliation ) ){
-				if ( log.isLoggable( Level.FINEST ) ){
-					log.log( Level.FINEST, "Filtering enabled: " + room.getConfig().isPresenceFilterEnabled()
-																 + "; target occupant doesn't have propper affiliation -  don't include him in the list" );
+			Affiliation affiliation = room.getAffiliation(occupantJid);
+			if (room.getConfig().isPresenceFilterEnabled()
+					&& !room.getConfig().getPresenceFilteredAffiliations().contains(affiliation)) {
+				if (log.isLoggable(Level.FINEST)) {
+					log.log(Level.FINEST, "Filtering enabled: " + room.getConfig().isPresenceFilterEnabled()
+							+ "; target occupant doesn't have propper affiliation -  don't include him in the list");
 				}
 				continue;
 			}
 
-			Element op = room.getLastPresenceCopyByJid( occupantJid );
+			Element op = room.getLastPresenceCopyByJid(occupantJid);
 
-			final Collection<JID> occupantJIDs = room.getOccupantsJidsByNickname( occupantNickname );
-			final BareJID occupantBareJID = room.getOccupantsJidByNickname( occupantNickname );
-			final Affiliation occupantAffiliation = room.getAffiliation( occupantBareJID );
-			final Role occupantRole = room.getRole( occupantNickname );
+			final Collection<JID> occupantJIDs = room.getOccupantsJidsByNickname(occupantNickname);
+			final BareJID occupantBareJID = room.getOccupantsJidByNickname(occupantNickname);
+			final Affiliation occupantAffiliation = room.getAffiliation(occupantBareJID);
+			final Role occupantRole = room.getRole(occupantNickname);
 
-			if ( context.isMultiItemMode() ){
-				PresenceWrapper l = PresenceWrapper.preparePresenceW( room, senderJID, op.clone(), occupantBareJID,
-																															occupantJIDs, occupantNickname, occupantAffiliation, occupantRole );
-				write( l.packet );
+			if (context.isMultiItemMode()) {
+				PresenceWrapper l = PresenceWrapper.preparePresenceW(room, senderJID, op.clone(), occupantBareJID,
+						occupantJIDs, occupantNickname, occupantAffiliation, occupantRole);
+				write(l.packet);
 			} else {
-				for ( JID jid : occupantJIDs ) {
-					Collection<JID> z = new ArrayList<JID>( 1 );
-					z.add( jid );
-					PresenceWrapper l = PresenceWrapper.preparePresenceW( room, senderJID, op.clone(), occupantBareJID, z,
-																																occupantNickname, occupantAffiliation, occupantRole );
-					write( l.packet );
+				for (JID jid : occupantJIDs) {
+					Collection<JID> z = new ArrayList<JID>(1);
+					z.add(jid);
+					PresenceWrapper l = PresenceWrapper.preparePresenceW(room, senderJID, op.clone(), occupantBareJID,
+							z, occupantNickname, occupantAffiliation, occupantRole);
+					write(l.packet);
 				}
 			}
 		}
 	}
 
-	protected void sendPresenceToAllOccupants(final Element $presence, Room room, JID senderJID, boolean newRoomCreated,
-			String newNickName) throws TigaseStringprepException {
+	protected void sendPresenceToAllOccupants(final Element $presence, Room room, JID senderJID,
+			boolean newRoomCreated, String newNickName) throws TigaseStringprepException {
 
 		final String occupantNickname = room.getOccupantsNickname(senderJID);
-		final BareJID occupantJID = room.getOccupantsJidByNickname( occupantNickname );
-		final Affiliation occupantAffiliation = room.getAffiliation( occupantJID );
-		final Role occupantRole = room.getRole( occupantNickname );
+		final BareJID occupantJID = room.getOccupantsJidByNickname(occupantNickname);
+		final Affiliation occupantAffiliation = room.getAffiliation(occupantJID);
+		final Role occupantRole = room.getRole(occupantNickname);
 
 		Collection<String> occupantsNicknames;
 
-		if ( room.getConfig().isPresenceFilterEnabled() ){
-			if ( room.getConfig().getPresenceFilteredAffiliations().contains( occupantAffiliation ) ){
+		if (room.getConfig().isPresenceFilterEnabled()) {
+			if (room.getConfig().getPresenceFilteredAffiliations().contains(occupantAffiliation)) {
 				// we only want users with propper affiliation
 				occupantsNicknames = room.getPresenceFiltered().getOccupantsPresenceFilteredNicknames();
 			} else {
 				// only send presence back to user that joined
-				occupantsNicknames = Arrays.asList( occupantNickname);
+				occupantsNicknames = Arrays.asList(occupantNickname);
 			}
 		} else {
 			// no filtering, send presence to all users
 			occupantsNicknames = room.getOccupantsNicknames();
 		}
 
-		if ( log.isLoggable( Level.FINEST ) ){
-			log.log( Level.FINEST, "Sending presence to all occupants, filtering enabled: " + room.getConfig().isPresenceFilterEnabled()
-														 + ", occupantsNicknames: " + Arrays.asList( occupantsNicknames ) );
-		}
+	
+			log.log(Level.FINEST,
+					"Sending presence to all occupants, filtering enabled: "
+							+ room.getConfig().isPresenceFilterEnabled() + ", occupantsNicknames: "
+							+ Arrays.asList(occupantsNicknames));
+		
 
-			for ( String destinationNickname : occupantsNicknames ) {
-					for ( JID destinationJID : room.getOccupantsJidsByNickname( destinationNickname ) ) {
+		for (String destinationNickname : occupantsNicknames) {
+			for (JID destinationJID : room.getOccupantsJidsByNickname(destinationNickname)) {
 
-				if ( context.isMultiItemMode() ){
-					PresenceWrapper presence = preparePresence( destinationJID, $presence.clone(), room, senderJID,
-																											newRoomCreated, newNickName );
-					write( presence.packet );
+				if (context.isMultiItemMode()) {
+					PresenceWrapper presence = preparePresence(destinationJID, $presence.clone(), room, senderJID,
+							newRoomCreated, newNickName);
+					write(presence.packet);
 				} else {
-					for ( JID jid : room.getOccupantsJidsByNickname( occupantNickname ) ) {
-						Collection<JID> z = new ArrayList<JID>( 1 );
-						z.add( jid );
-						PresenceWrapper l = PresenceWrapper.preparePresenceW( room, destinationJID, $presence.clone(),
-																																	occupantJID, z, occupantNickname, occupantAffiliation, occupantRole );
-						addCodes( l, newRoomCreated, newNickName );
+					for (JID jid : room.getOccupantsJidsByNickname(occupantNickname)) {
+						Collection<JID> z = new ArrayList<JID>(1);
+						z.add(jid);
+						PresenceWrapper l = PresenceWrapper.preparePresenceW(room, destinationJID, $presence.clone(),
+								occupantJID, z, occupantNickname, occupantAffiliation, occupantRole);
+						addCodes(l, newRoomCreated, newNickName);
 
-						write( l.packet );
+						write(l.packet);
 					}
 				}
 			}

@@ -317,7 +317,7 @@ public class GroupchatMessageModule extends AbstractMucModule {
 
 	public void sendMessagesToAllOccupantsJids(final Room room, final JID fromJID, String messageId, final Element... content)
 			throws TigaseStringprepException {
-		log.log(Level.WARNING, "xgroupchat sending messages to all occupants: " + room + " nick name " +  room.getOccupantsNicknames());
+		log.log(Level.INFO, "xgroupchat sending messages to all occupants: " + room + " nick name " +  room.getOccupantsNicknames());
 		for (String nickname : room.getOccupantsNicknames()) {
 			final Role role = room.getRole(nickname);
 		
@@ -326,7 +326,7 @@ public class GroupchatMessageModule extends AbstractMucModule {
 			}
 
 			final Collection<JID> occupantJids = room.getOccupantsJidsByNickname(nickname);
-			log.log(Level.WARNING, "xgroupchat TOTAL occupants: " + occupantJids);
+			
 			for (JID jid : occupantJids) {
 				Element e = new Element("message", new String[] { "type", "from", "to" }, new String[] { "groupchat",
 						fromJID.toString(), jid.toString() });

@@ -84,6 +84,7 @@ public abstract class AbstractMucModule extends AbstractModule<MucContext> {
 	 * @throws TigaseStringprepException
 	 */
 	protected void sendMucMessage(Room room, String recipientNickame, String message) throws TigaseStringprepException {
+		log.info(" PROC ENter: sending MUC message to room : "+ room + " recpt nickname: "+ recipientNickame + " message "+ message);
 		Collection<JID> occupantJids = room.getOccupantsJidsByNickname(recipientNickame);
 
 		for (JID jid : occupantJids) {
