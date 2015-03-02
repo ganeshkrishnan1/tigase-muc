@@ -43,8 +43,11 @@ import tigase.muc.exceptions.MUCException;
 import tigase.muc.repository.IMucRepository;
 import tigase.muc.repository.MucDAO;
 import tigase.xml.Element;
+
 import tigase.xmpp.BareJID;
 import tigase.xmpp.JID;
+
+import tigase.muc.MUCComponent;
 
 /**
  * @author bmalkow
@@ -137,6 +140,18 @@ public class InMemoryMucRepository implements IMucRepository {
 					throw new RuntimeException(e);
 				}
 			}
+
+			@Override
+			public void onInitialRoomConfig( RoomConfig roomConfig ) {
+				try {
+					if ( roomConfig.isPersistentRoom() ){
+						final Room room = getRoom( roomConfig.getRoomJID() );
+						dao.createRoom( room );
+					}
+				} catch ( Exception e ) {
+					throw new RuntimeException( e );
+				}
+			}
 		};
 	}
 
@@ -161,6 +176,10 @@ public class InMemoryMucRepository implements IMucRepository {
 		this.rooms.put(roomJID, room);
 		this.allRooms.put(roomJID, new InternalRoom());
 
+//		if (rc.isPersistentRoom()) {
+//			dao.createRoom( room );
+//		}
+
 		return room;
 	}
 
@@ -184,7 +203,7 @@ public class InMemoryMucRepository implements IMucRepository {
 		if (defaultConfig == null) {
 			defaultConfig = new RoomConfig(null, this.mucConfig.isPublicLoggingEnabled());
 			try {
-				defaultConfig.read(dao.getRepository(), mucConfig, MucDAO.ROOMS_KEY + null + "/config");
+				defaultConfig.read(dao.getRepository(), mucConfig, MucDAO.ROOMS_KEY + MUCComponent.DEFAULT_ROOM_CONFIG_KEY + "/config");
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
