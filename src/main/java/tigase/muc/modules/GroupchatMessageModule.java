@@ -37,7 +37,6 @@ import tigase.muc.Affiliation;
 import tigase.muc.DateUtil;
 import tigase.muc.Role;
 import tigase.muc.Room;
-import tigase.muc.RoomConfig;
 import tigase.muc.exceptions.MUCException;
 import tigase.muc.history.HistoryProvider;
 import tigase.muc.logger.MucLogger;
@@ -103,8 +102,10 @@ public class GroupchatMessageModule extends AbstractMucModule {
 		try {
 			HistoryProvider historyProvider = context.getHistoryProvider();
 			if (historyProvider != null) {
-				historyProvider.addSubjectChange(room, context.isMessageFilterEnabled() ? null : message, subject,
-						senderJid, senderNickname, time);
+
+				historyProvider.addSubjectChange(room, message, subject, senderJid,
+						senderNickname, time);
+
 			}
 		} catch (Exception e) {
 			if (log.isLoggable(Level.WARNING))
@@ -273,16 +274,17 @@ public class GroupchatMessageModule extends AbstractMucModule {
 				addMessageToHistory(room, msg.getElement(), body.getCData(), senderJID, nickName, sendDate);
 			}
 			if (subject != null) {
-				addSubjectChangeToHistory(room, packet.getElement(), subject.getCData(), senderJID, nickName, sendDate);
+				addSubjectChangeToHistory(room, msg.getElement(), subject.getCData(), senderJID, nickName, sendDate);
 			}
 
 			if (sendDate != null) {
-				msg.getElement().addChild(
-						new Element("delay", new String[] { "xmlns", "stamp" }, new String[] { "urn:xmpp:delay",
-								DateUtil.formatDatetime(sendDate) }));
-			}
 
-			sendMessagesToAllOccupantsJids(room, senderRoomJID, msg);
+				msg.getElement().addChild(new Element("delay", new String[] { "xmlns", "stamp" }, new String[] { "urn:xmpp:delay",
+						DateUtil.formatDatetime(sendDate) }));
+			}			
+			
+			sendMessagesToAllOccupants(room, senderRoomJID, msg);
+
 		} catch (MUCException e1) {
 			throw e1;
 		} catch (TigaseStringprepException e) {
@@ -309,8 +311,15 @@ public class GroupchatMessageModule extends AbstractMucModule {
 	public void sendMessagesToAllOccupants(final Room room, final JID fromJID, final Element... content)
 			throws TigaseStringprepException {
 		Packet msg = preparePacket(null, content);
-		sendMessagesToAllOccupantsJids(room, fromJID, msg);
+		sendMessagesToAllOccupants(room, fromJID, msg);
 	}
+
+	public void sendMessagesToAllOccupants(final Room room, final JID fromJID, final Packet msg) throws TigaseStringprepException {
+		sendMessagesToAllOccupantsJids(room, fromJID, msg);
+
+		room.fireOnMessageToOccupants(fromJID, msg);	
+	}
+	
 
 	public void sendMessagesToAllOccupantsJids(final Room room, final JID fromJID, final Packet msg)
 			throws TigaseStringprepException {
