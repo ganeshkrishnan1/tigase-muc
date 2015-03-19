@@ -327,10 +327,10 @@ public class RoomConfig {
 	protected void init() {
 		form.addField(Field.fieldTextSingle(MUC_ROOMCONFIG_ROOMNAME_KEY, "", "Natural-Language Room Name"));
 		form.addField(Field.fieldTextSingle(MUC_ROOMCONFIG_ROOMDESC_KEY, "", "Short Description of Room"));
-		form.addField(Field.fieldBoolean(MUC_ROOMCONFIG_PERSISTENTROOM_KEY, Boolean.FALSE, "Make Room Persistent?"));
-		form.addField(Field.fieldBoolean(MUC_ROOMCONFIG_PUBLICROOM_KEY, Boolean.TRUE, "Make Room Publicly Searchable?"));
+		form.addField(Field.fieldBoolean(MUC_ROOMCONFIG_PERSISTENTROOM_KEY, Boolean.TRUE, "Make Room Persistent?"));
+		form.addField(Field.fieldBoolean(MUC_ROOMCONFIG_PUBLICROOM_KEY, Boolean.FALSE, "Make Room Publicly Searchable?"));
 		form.addField(Field.fieldBoolean(MUC_ROOMCONFIG_MODERATEDROOM_KEY, Boolean.FALSE, "Make Room Moderated?"));
-		form.addField(Field.fieldBoolean(MUC_ROOMCONFIG_MEMBERSONLY_KEY, Boolean.FALSE, "Make Room Members Only?"));
+		form.addField(Field.fieldBoolean(MUC_ROOMCONFIG_MEMBERSONLY_KEY, Boolean.TRUE, "Make Room Members Only?"));
 		form.addField(Field.fieldBoolean(MUC_ROOMCONFIG_PASSWORDPROTECTEDROOM_KEY, Boolean.FALSE, "Password Required to Enter?"));
 		form.addField(Field.fieldTextSingle(MUC_ROOMCONFIG_ROOMSECRET_KEY, "", "Password"));
 
@@ -345,7 +345,7 @@ public class RoomConfig {
 					"HTML", "Plain text" }, new String[] { LogFormat.html.name(), LogFormat.plain.name() }));
 		}
 
-		form.addField(Field.fieldTextSingle(MUC_ROOMCONFIG_MAXHISTORY_KEY, "50",
+		form.addField(Field.fieldTextSingle(MUC_ROOMCONFIG_MAXHISTORY_KEY, "100",
 				"Maximum Number of History Messages Returned by Room"));
 		
 
@@ -377,7 +377,7 @@ public class RoomConfig {
 	}
 
 	public boolean isPersistentRoom() {
-		return asBoolean(form.getAsBoolean(MUC_ROOMCONFIG_PERSISTENTROOM_KEY), false);
+		return asBoolean(form.getAsBoolean(MUC_ROOMCONFIG_PERSISTENTROOM_KEY), true);
 	}
 
 	public boolean isPresenceFilterEnabled() {

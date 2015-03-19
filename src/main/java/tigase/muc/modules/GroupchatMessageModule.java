@@ -37,6 +37,7 @@ import tigase.muc.Affiliation;
 import tigase.muc.DateUtil;
 import tigase.muc.Role;
 import tigase.muc.Room;
+import tigase.muc.RoomConfig;
 import tigase.muc.exceptions.MUCException;
 import tigase.muc.history.HistoryProvider;
 import tigase.muc.logger.MucLogger;
@@ -103,8 +104,7 @@ public class GroupchatMessageModule extends AbstractMucModule {
 			HistoryProvider historyProvider = context.getHistoryProvider();
 			if (historyProvider != null) {
 
-				historyProvider.addSubjectChange(room, message, subject, senderJid,
-						senderNickname, time);
+				historyProvider.addSubjectChange(room, message, subject, senderJid, senderNickname, time);
 
 			}
 		} catch (Exception e) {
@@ -185,7 +185,7 @@ public class GroupchatMessageModule extends AbstractMucModule {
 	@Override
 	public void process(Packet packet) throws MUCException {
 		try {
-			log.log(Level.WARNING, "xgroupchat module packet for MUC: " + packet);
+
 			final JID senderJID = JID.jidInstance(packet.getAttributeStaticStr(Packet.FROM_ATT));
 			final BareJID roomJID = BareJID.bareJIDInstance(packet.getAttributeStaticStr(Packet.TO_ATT));
 
@@ -202,13 +202,19 @@ public class GroupchatMessageModule extends AbstractMucModule {
 			final String nickName = room.getOccupantsNickname(senderJID);
 			final Role role = room.getRole(nickName);
 			final Affiliation affiliation = room.getAffiliation(senderJID.getBareJID());
+			log.info("GROUPChat message nickname:" + nickName + " with role: " + role + " affiliantion: " + affiliation);
+			
+			if (log.isLoggable(Level.FINEST)) {
+				log.finest("Processing groupchat message. room=" + roomJID + "; senderJID=" + senderJID + "; senderNickname="
+						+ nickName + "; role=" + role + "; affiliation=" + affiliation + ";");
+			}
 
 			if (!role.isSendMessagesToAll() || (room.getConfig().isRoomModerated() && (role == Role.visitor))) {
 				if (log.isLoggable(Level.FINE))
 					log.fine("Insufficient privileges to send grouchat message: role=" + role + "; roomModerated="
 							+ room.getConfig().isRoomModerated() + "; stanza="
 							+ packet.getElement().toStringNoChildren());
-				throw new MUCException(Authorization.FORBIDDEN, "Insufficient privileges to send groupchat message.");
+				//throw new MUCException(Authorization.FORBIDDEN, "Insufficient privileges to send groupchat message.");
 			}
 
 			Element body = null;
@@ -279,10 +285,11 @@ public class GroupchatMessageModule extends AbstractMucModule {
 
 			if (sendDate != null) {
 
-				msg.getElement().addChild(new Element("delay", new String[] { "xmlns", "stamp" }, new String[] { "urn:xmpp:delay",
-						DateUtil.formatDatetime(sendDate) }));
-			}			
-			
+				msg.getElement().addChild(
+						new Element("delay", new String[] { "xmlns", "stamp" }, new String[] { "urn:xmpp:delay",
+								DateUtil.formatDatetime(sendDate) }));
+			}
+
 			sendMessagesToAllOccupants(room, senderRoomJID, msg);
 
 		} catch (MUCException e1) {
@@ -314,23 +321,24 @@ public class GroupchatMessageModule extends AbstractMucModule {
 		sendMessagesToAllOccupants(room, fromJID, msg);
 	}
 
-	public void sendMessagesToAllOccupants(final Room room, final JID fromJID, final Packet msg) throws TigaseStringprepException {
+	public void sendMessagesToAllOccupants(final Room room, final JID fromJID, final Packet msg)
+			throws TigaseStringprepException {
 		sendMessagesToAllOccupantsJids(room, fromJID, msg);
 
-		room.fireOnMessageToOccupants(fromJID, msg);	
+		room.fireOnMessageToOccupants(fromJID, msg);
 	}
-	
 
 	public void sendMessagesToAllOccupantsJids(final Room room, final JID fromJID, final Packet msg)
 			throws TigaseStringprepException {
 
 		log.log(Level.INFO,
-				"xgroupchat sending messages to all occupants: " + room + " nick name " + room.getOccupantsNicknames());
+				"xgroupchat sending messages to all occupants Room: Subject:" + room.getSubject() + " //JID:" + room.getRoomJID() + " // OCcupants: " + room.getOccupantsNicknames());
 		for (String nickname : room.getOccupantsNicknames()) {
 			final Role role = room.getRole(nickname);
-
+			log.info( nickname +"  has role to receive?: " + role.isReceiveMessages());
 			if (!role.isReceiveMessages()) {
-				continue;
+				//We don't give a shit right now. Go ahead and send the message
+				//continue;
 			}
 
 			final Collection<JID> occupantJids = room.getOccupantsJidsByNickname(nickname);
@@ -342,8 +350,10 @@ public class GroupchatMessageModule extends AbstractMucModule {
 
 				// we sent this to message amp or some other plugin to make sure
 				// it's deliverred?
-
+				log.log(Level.INFO, " sending message " + message + " to occupant " + jid + " //" + message.toStringFull());
+				
 				write(message);
+				
 			}
 		}
 	}

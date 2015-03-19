@@ -232,7 +232,7 @@ public class MUCComponent extends AbstractComponent<MucContext> {
 		Map<String, Class<? extends Module>> result = new HashMap<String, Class<? extends Module>>();
 
 		result.put(XmppPingModule.ID, XmppPingModule.class);
-		result.put(JabberVersionModule.ID, JabberVersionModule.class);
+		//result.put(JabberVersionModule.ID, JabberVersionModule.class);
 
 		result.put(tigase.component.modules.impl.DiscoveryModule.ID, DiscoveryModule.class);
 		result.put(GroupchatMessageModule.ID, GroupchatMessageModule.class);
@@ -343,9 +343,7 @@ public class MUCComponent extends AbstractComponent<MucContext> {
 	 */
 	@Override
 	public void processPacket(Packet packet) {
-		log.log(Level.WARNING, "MUCProcessing packet for MUC: " + packet);
-		
-		super.processPacket(packet);
+	super.processPacket(packet);
 	}
 
 	@Override

@@ -34,6 +34,7 @@ import java.util.logging.Logger;
 
 import tigase.component.exceptions.RepositoryException;
 import tigase.muc.Affiliation;
+import tigase.muc.MUCComponent;
 import tigase.muc.MucContext;
 import tigase.muc.Room;
 import tigase.muc.Room.RoomListener;
@@ -42,13 +43,10 @@ import tigase.muc.RoomConfig.RoomConfigListener;
 import tigase.muc.exceptions.MUCException;
 import tigase.muc.repository.IMucRepository;
 import tigase.muc.repository.MucDAO;
+import tigase.server.Packet;
 import tigase.xml.Element;
-
 import tigase.xmpp.BareJID;
 import tigase.xmpp.JID;
-
-import tigase.muc.MUCComponent;
-import tigase.server.Packet;
 
 /**
  * @author bmalkow
@@ -60,7 +58,7 @@ public class InMemoryMucRepository implements IMucRepository {
 		boolean listPublic = true;
 	}
 
-	private final Map<BareJID, InternalRoom> allRooms = new ConcurrentHashMap<BareJID, InternalRoom>();
+	private Map<BareJID, InternalRoom> allRooms = new ConcurrentHashMap<BareJID, InternalRoom>();
 
 	private final MucDAO dao;
 
@@ -74,15 +72,18 @@ public class InMemoryMucRepository implements IMucRepository {
 
 	private final RoomListener roomListener;
 
-	private final Map<BareJID, Room> rooms = new ConcurrentHashMap<BareJID, Room>();
+	private Map<BareJID, Room> rooms = new ConcurrentHashMap<BareJID, Room>();
 
 	public InMemoryMucRepository(final MucContext mucConfig, final MucDAO dao) throws RepositoryException {
 		this.dao = dao;
 		this.mucConfig = mucConfig;
+		log.warning("Attempting to restore rooms ..");
+		
 
 		ArrayList<BareJID> roomJids = dao.getRoomsJIDList();
 		if (roomJids != null) {
 			for (BareJID jid : roomJids) {
+				log.warning(" restoring room with JID .." + jid);
 				this.allRooms.put(jid, new InternalRoom());
 			}
 		}
@@ -128,6 +129,8 @@ public class InMemoryMucRepository implements IMucRepository {
 					}
 
 					if (modifiedVars.contains(RoomConfig.MUC_ROOMCONFIG_PERSISTENTROOM_KEY)) {
+						
+						log.warning(" reconfiging rooms  isperisinet? "+ roomConfig.isPersistentRoom() );
 						if (roomConfig.isPersistentRoom()) {
 							final Room room = getRoom(roomConfig.getRoomJID());
 							dao.createRoom(room);
@@ -143,14 +146,14 @@ public class InMemoryMucRepository implements IMucRepository {
 			}
 
 			@Override
-			public void onInitialRoomConfig( RoomConfig roomConfig ) {
+			public void onInitialRoomConfig(RoomConfig roomConfig) {
 				try {
-					if ( roomConfig.isPersistentRoom() ){
-						final Room room = getRoom( roomConfig.getRoomJID() );
-						dao.createRoom( room );
+					if (roomConfig.isPersistentRoom()) {
+						final Room room = getRoom(roomConfig.getRoomJID());
+						dao.createRoom(room);
 					}
-				} catch ( Exception e ) {
-					throw new RuntimeException( e );
+				} catch (Exception e) {
+					throw new RuntimeException(e);
 				}
 			}
 		};
@@ -174,12 +177,13 @@ public class InMemoryMucRepository implements IMucRepository {
 		Room room = Room.newInstance(rc, new Date(), senderJid.getBareJID());
 		room.getConfig().addListener(roomConfigListener);
 		room.addListener(roomListener);
+		//add this to the database?
 		this.rooms.put(roomJID, room);
 		this.allRooms.put(roomJID, new InternalRoom());
-
-//		if (rc.isPersistentRoom()) {
-//			dao.createRoom( room );
-//		}
+		
+		// if (rc.isPersistentRoom()) {
+		// dao.createRoom( room );
+		// }
 
 		return room;
 	}
@@ -204,7 +208,8 @@ public class InMemoryMucRepository implements IMucRepository {
 		if (defaultConfig == null) {
 			defaultConfig = new RoomConfig(null, this.mucConfig.isPublicLoggingEnabled());
 			try {
-				defaultConfig.read(dao.getRepository(), mucConfig, MucDAO.ROOMS_KEY + MUCComponent.DEFAULT_ROOM_CONFIG_KEY + "/config");
+				defaultConfig.read(dao.getRepository(), mucConfig, MucDAO.ROOMS_KEY
+						+ MUCComponent.DEFAULT_ROOM_CONFIG_KEY + "/config");
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -236,6 +241,7 @@ public class InMemoryMucRepository implements IMucRepository {
 	 */
 	@Override
 	public Room getRoom(final BareJID roomJID) throws RepositoryException, MUCException {
+		//get from public repo
 		Room room = this.rooms.get(roomJID);
 		if (room == null) {
 			room = dao.readRoom(roomJID);

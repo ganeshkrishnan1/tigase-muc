@@ -163,11 +163,11 @@ public class Room implements RoomConfig.RoomConfigListener {
 			entry.jid = senderJid.getBareJID();
 			this.occupants.put(nickName, entry);
 
-			if ( log.isLoggable( Level.FINEST ) ){
-				log.log( Level.FINEST, "Room {0}. Created OccupantEntry for {1}, nickname={2}",
+//			if ( log.isLoggable( Level.FINEST ) ){
+				log.log( Level.INFO, "Room {0}. Created OccupantEntry for {1}, nickname={2}",
 								 new Object[] { config.getRoomJID(), senderJid, nickName }
 				);
-			}
+			//}
 		}
 
 		entry.role = role;
@@ -176,12 +176,12 @@ public class Room implements RoomConfig.RoomConfigListener {
 			added = entry.jids.add(senderJid);
 		}
 
-		if ( log.isLoggable( Level.FINEST ) ){
-			log.log( Level.FINEST, "Room {0}. {1} occupant {2} ({3}) to room with role={4}; filtering enabled: {5}",
+//		if ( log.isLoggable( Level.FINEST ) ){
+			log.log( Level.INFO, "Room {0}. {1} occupant {2} ({3}) to room with role={4}; filtering enabled: {5}",
 							 new Object[] { config.getRoomJID(), ( added ? "Added" : "Updated" ),
 																									 senderJid, nickName, role, config.isPresenceFilterEnabled() }
 			);
-		}
+		//}
 
 		if ( added ){
 			if ( !config.isPresenceFilterEnabled()

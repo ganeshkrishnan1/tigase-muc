@@ -574,10 +574,10 @@ public class PresenceModuleImpl extends AbstractMucModule implements PresenceMod
 	 */
 	protected void processEntering(final Room room, final boolean roomCreated, final Element element,
 			final JID senderJID, final String nickname) throws MUCException, TigaseStringprepException {
-		if (log.isLoggable(Level.FINEST)) {
+		
 			log.finest("Processing Entering stanza " + element.toString() + " room created? " + roomCreated
 					+ " from senderjid " + senderJID);
-		}
+		
 
 		final Affiliation affiliation = room.getAffiliation(senderJID.getBareJID());
 		final Element xElement = element.getChild("x", "http://jabber.org/protocol/muc");
@@ -666,7 +666,7 @@ public class PresenceModuleImpl extends AbstractMucModule implements PresenceMod
 			since = DateUtil.parse(hist.getAttributeStaticStr("since"));
 		}
 		sendHistoryToUser(room, senderJID, maxchars, maxstanzas, seconds, since);
-		log.info("rool subect: " + room.getSubject() + " nick:" + room.getSubjectChangerNick() + " datet:"
+		log.info("room subect: " + room.getSubject() + " nick:" + room.getSubjectChangerNick() + " date:"
 				+ room.getSubjectChangeDate());
 		if ((room.getSubject() != null) && (room.getSubjectChangerNick() != null)
 				&& (room.getSubjectChangeDate() != null)) {
@@ -691,7 +691,6 @@ public class PresenceModuleImpl extends AbstractMucModule implements PresenceMod
 
 			Packet p = Packet.packetInstance(message);
 			p.setXMLNS(Packet.CLIENT_XMLNS);
-			log.info(" gropp proc create:" + p);
 			write(p);
 		}
 		log.info(" room is lock?" + room.isRoomLocked() + " room created??"+ roomCreated);
