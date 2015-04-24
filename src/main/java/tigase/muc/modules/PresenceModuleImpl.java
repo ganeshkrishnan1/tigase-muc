@@ -445,7 +445,6 @@ public class PresenceModuleImpl extends AbstractMucModule implements PresenceMod
 		final BareJID roomJID = BareJID.bareJIDInstance(element.getAttributeStaticStr(Packet.TO_ATT));
 		final String nickName = getNicknameFromJid(JID.jidInstance(element.getAttributeStaticStr(Packet.TO_ATT)));
 		final String presenceType = element.getAttributeStaticStr(Packet.TYPE_ATT);
-		log.info("Processing presences " + element);
 		// final String id = element.getAttribute("id");
 		if ((presenceType != null) && "error".equals(presenceType)) {
 			if (log.isLoggable(Level.FINER)) {
@@ -574,10 +573,10 @@ public class PresenceModuleImpl extends AbstractMucModule implements PresenceMod
 	 */
 	protected void processEntering(final Room room, final boolean roomCreated, final Element element,
 			final JID senderJID, final String nickname) throws MUCException, TigaseStringprepException {
-		
-			log.finest("Processing Entering stanza " + element.toString() + " room created? " + roomCreated
-					+ " from senderjid " + senderJID);
-		
+
+		// log.finest("Processing Entering stanza " + element.toString() +
+		// " room created? " + roomCreated
+		// + " from senderjid " + senderJID);
 
 		final Affiliation affiliation = room.getAffiliation(senderJID.getBareJID());
 		final Element xElement = element.getChild("x", "http://jabber.org/protocol/muc");
@@ -637,11 +636,14 @@ public class PresenceModuleImpl extends AbstractMucModule implements PresenceMod
 
 		final Role newRole = getDefaultRole(room.getConfig(), affiliation);
 
-		log.info("ProcEnter: Occupant '" + nickname + "' <" + senderJID.toString() + "> is entering room "
-				+ room.getRoomJID() + " as role=" + newRole.name() + ", affiliation=" + affiliation.name());
+		// log.info("ProcEnter: Occupant '" + nickname + "' <" +
+		// senderJID.toString() + "> is entering room "
+		// + room.getRoomJID() + " as role=" + newRole.name() + ", affiliation="
+		// + affiliation.name());
 
 		Element pe = clonePresence(element);
-		log.info("Adding occupants PE:" + pe + " niclname:"+ nickname +" senderjid:" + senderJID );
+		// log.info("Adding occupants PE:" + pe + " niclname:"+ nickname
+		// +" senderjid:" + senderJID );
 		room.addOccupantByJid(senderJID, nickname, newRole, pe);
 
 		// context.getGhostbuster().add(senderJID, room);
@@ -666,8 +668,9 @@ public class PresenceModuleImpl extends AbstractMucModule implements PresenceMod
 			since = DateUtil.parse(hist.getAttributeStaticStr("since"));
 		}
 		sendHistoryToUser(room, senderJID, maxchars, maxstanzas, seconds, since);
-		log.info("room subect: " + room.getSubject() + " nick:" + room.getSubjectChangerNick() + " date:"
-				+ room.getSubjectChangeDate());
+		// log.info("room subect: " + room.getSubject() + " nick:" +
+		// room.getSubjectChangerNick() + " date:"
+		// + room.getSubjectChangeDate());
 		if ((room.getSubject() != null) && (room.getSubjectChangerNick() != null)
 				&& (room.getSubjectChangeDate() != null)) {
 
@@ -693,8 +696,9 @@ public class PresenceModuleImpl extends AbstractMucModule implements PresenceMod
 			p.setXMLNS(Packet.CLIENT_XMLNS);
 			write(p);
 		}
-		log.info(" room is lock?" + room.isRoomLocked() + " room created??"+ roomCreated);
-	
+		// log.info(" room is lock?" + room.isRoomLocked() + " room created??"+
+		// roomCreated);
+
 		if (room.isRoomLocked()) {
 			sendMucMessage(room, room.getOccupantsNickname(senderJID), "Room is locked. Please configure.");
 		}
@@ -707,7 +711,7 @@ public class PresenceModuleImpl extends AbstractMucModule implements PresenceMod
 			} else if (context.isNewRoomLocked()) {
 				sb.append(" Room is unlocked and ready for occupants!");
 			}
-			
+
 			sendMucMessage(room, room.getOccupantsNickname(senderJID), sb.toString());
 		}
 		if (room.getConfig().isLoggingEnabled()) {
@@ -806,7 +810,8 @@ public class PresenceModuleImpl extends AbstractMucModule implements PresenceMod
 			}
 
 			Element op = room.getLastPresenceCopyByJid(occupantJid);
-
+			if (null == op)
+				return;
 			final Collection<JID> occupantJIDs = room.getOccupantsJidsByNickname(occupantNickname);
 			final BareJID occupantBareJID = room.getOccupantsJidByNickname(occupantNickname);
 			final Affiliation occupantAffiliation = room.getAffiliation(occupantBareJID);
@@ -851,12 +856,11 @@ public class PresenceModuleImpl extends AbstractMucModule implements PresenceMod
 			occupantsNicknames = room.getOccupantsNicknames();
 		}
 
-	
-			log.log(Level.FINEST,
-					"Sending presence to all occupants, filtering enabled: "
-							+ room.getConfig().isPresenceFilterEnabled() + ", occupantsNicknames: "
-							+ Arrays.asList(occupantsNicknames));
-		
+		// log.log(Level.FINEST,
+		// "Sending presence to all occupants, filtering enabled: "
+		// + room.getConfig().isPresenceFilterEnabled() +
+		// ", occupantsNicknames: "
+		// + Arrays.asList(occupantsNicknames));
 
 		for (String destinationNickname : occupantsNicknames) {
 			for (JID destinationJID : room.getOccupantsJidsByNickname(destinationNickname)) {

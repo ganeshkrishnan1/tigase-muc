@@ -113,8 +113,8 @@ public class MediatedInvitationModule extends AbstractMucModule {
 
 		try {
 			Element pe = new Element("presence");
-			log.info(" Adding occupants to room. Sender JID" + senderJID + " recipeint " + recipient );
-			room.addOccupantByJid(senderJID, recipient.toString(), newRole, pe);
+			log.info(" Adding occupants to room. Sender JID: " + senderJID + " recipeint " + recipient );
+			room.addOccupantByJid(recipient, recipient.toString(), newRole, pe);
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			log.warning(" error adding coccupants");
